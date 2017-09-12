@@ -1,0 +1,149 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+```
+
+
+# read_data
+## heading
+this is text to document
+
+
+```{r}
+#comment
+data_raw <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\BarleyPARData.dat",header = TRUE, sep=",")
+
+```
+
+check data
+```{r}
+
+str(data_raw)
+```
+# tide up data
+```{r}
+data_work<-data_raw %>%
+  mutate(Date = as.Date(ymd_hms(Date))) %>%
+  mutate(PAR=X0)%>%
+  dplyr::select(-X0)
+
+str(data_work)
+```
+# check data
+```{r}
+summary(data_work)
+```
+
+```{r}
+data_work %>% 
+  ggplot(aes(x=Date, y=PAR)) +
+  geom_point()+
+  facet_grid(Cultivar~Irrigation)
+  
+```
+
+```{r}
+data_raw <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\BarleyPARData.dat",header = TRUE, sep=",")
+View(data_raw)
+str(data_raw)
+```
+```{r}
+
+data_raw_WHEAT <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\WheatPARData.dat",header = TRUE, sep=",")
+View(data_raw)
+str(data_raw)
+
+```
+
+```{r}
+head(data_raw)
+```
+
+```{r}
+tail(data_raw)
+```
+```{r}
+summary(data_raw)
+```
+
+```{r}
+RUE <- read.table("K:\\CPDiary\\Data\\R file\\R_TablesforRUE.txt", header = TRUE)
+```
+
+```{r}
+summary(RUE)
+head(RUE)
+tail(RUE)
+```
+
+```{r}
+summary(RUE)
+```
+```{r}
+RUEStats <- read.table("K:\\CPDiary\\Data\\R file\\RUE_stats.txt", header = TRUE)
+summary(RUEStats)
+```
+
+```{r}
+head(RUEStats)
+```
+```{r}
+View(RUEStats)
+```
+```{r}
+str(RUEStats)
+```
+
+```{r}
+WheatPAR <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\WheatPARData.dat", header = TRUE, sep=",")
+```
+```{r}
+summary(WheatPAR)
+```
+Creat transimmitted PAR
+```{r}
+data_work <- data_raw %>%
+  mutate(X0 = ifelse(X0<0,0,as.numeric(X0))) %>% # make negative values = 0
+  mutate(Cultivar = as.factor(Cultivar))%>%
+  mutate(Cultivar = as.factor(Block))%>%
+  mutate(Cultivar = as.factor(Irrigation))%>%
+  mutate(Date_time=ymd_hms(Date)) %>%
+  mutate(Date=as.Date(Date)) # creating daily "date"
+
+
+summary(data_work)
+
+str(data_work)
+
+```
+Do averages
+```{r}
+df_average <- data_work %>%
+  group_by(Measurement,Cultivar,Irrigation,Block,Date) %>% # average by? ...
+  summarise(PAR_avg = mean(X0)) # %>%
+ # filter(Date == "2014-11-06")
+
+summary(df_average)
+
+
+
+
+# test
+
+str(data_raw)
+
+str(data_work)
+```
+graph
+```{r}
+df_average %>%
+  ggplot(aes(x=Date, y=PAR_avg))+
+  geom_line(aes(colour=factor(Measurement)))
+```
+
