@@ -9,12 +9,32 @@ library(dplyr) #organise data
 library(tidyr) #organise data
 library(ggplot2) # graph
 ```
+# read total radiation
+```{r}
+#comment
+data_Rad_raw <- read.table("C:/GitHubRepos/BarleyPAR/TotalRadiation.txt",header = TRUE)
 
+# check
+summary(data_Rad_raw)
+```
+```{r}
+# using dplyr
+data_Rad_work <- data_Rad_raw %>%
+  mutate(Date=dmy(Date)) # make it as a date format (not a factor)
+   
+str(data_Rad_work)   
+
+  
+```
+
+```{r}
+summary(data_Rad_work)
+```
 
 # read_data
 ## heading
 this is text to document
-
+## SunScan ----------------
 
 ```{r}
 #comment
@@ -36,13 +56,103 @@ str(data_sun_raw)
 # using dplyr
 data_sun_work <- data_sun_raw %>%
   mutate(Date=dmy(Date)) %>% # make it as a date format (not a factor)
-   mutate(Plot=factor(Date)) %>%# make it a factor (i.e. not number)
+   mutate(Plot=factor(Plot)) %>%# make it a factor (i.e. not number)
    mutate(SunScan = ifelse(SunScan<0,0,SunScan))
 
 str(data_sun_work)    
   
 ```
+
+
+
 ```{r}
 summary(data_sun_work)
+```
+
+## Greenseeker ----------------
+
+```{r}
+#comment
+data_GreenS_raw <- read.table("C:/GitHubRepos/BarleyPAR/GreenSeeker.txt",header = TRUE)
+
+# check
+summary(data_GreenS_raw)
+```
+
+```{r}
+# check formats
+str(data_GreenS_raw)
+```
+
+
+# clean data
+
+```{r}
+# using dplyr
+data_GreenS_work <- data_GreenS_raw %>%
+  mutate(Date=dmy(Date)) %>% # make it as a date format (not a factor)
+   mutate(Plot=factor(Plot)) %>%# make it a factor (i.e. not number)
+   mutate(GreenSeeker = ifelse(GreenSeeker<0,0,GreenSeeker))
+
+str(data_GreenS_work)    
+  
+```
+```{r}
+summary(data_GreenS_work)
+```
+
+# 2. Interpolate values by day
+
+```{r}
+
+
+stDate <- dmy("14/10/2014") # sowing date
+endate <- dmy("11/02/2015") # harvest date  
+plotNo <- c(201:224)
+
+df_frame <- data_Rad_work %>%
+  filter(Date %in% stDate:endate) %>%
+  mutate(Plot=NA) # create empty variable
+
+summary(df_frame)
+
+df_all <- data.frame()
+
+for(i in 1:length(plotNo)) {
+  
+  df_this <- df_frame %>% mutate(Plot = plotNo[i]) # creates plot # as i index from plotNo
+  
+  df_all <- rbind(df_all,df_this)
+  
+}
+
+summary(df_all)
+
+
+test_df<- do.call("rbind", replicate(length(plotNo), df_interp, simplify = FALSE))
+# Bring measured values
+
+
+df_temp <- merge(df_interp, data_GreenS_work,by="Date")
+
+
+
+
+
+# dataframe with NAs in gaps
+dat <- data.frame(id = c(1,1,1,2,2,2,3,3,3), 
+                  year = c(1,2,3,1,2,3,1,2,3), 
+                  x = c(1,NA,2, 3, NA, 4, 5, NA, 6))
+dat
+
+# fill gaps with linear interpolation
+library(dplyr)
+library(zoo)
+dat %>% 
+  group_by(id) %>% 
+  mutate(x2 = na.approx(x, year)) %>% 
+  ungroup()
+
+
 ```
 
