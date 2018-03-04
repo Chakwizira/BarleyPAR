@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r, include=false}
+library(lubridate) # deal with dates
+library(dplyr) #organise data
+library(tidyr) #organise data
+library(ggplot2) # graph
+```
+
+
+# read_data
+## heading
+this is text to document
+
+
+```{r}
+#comment
+data_sun_raw <- read.table("C:/GitHubRepos/BarleyPAR/SunScan.txt",header = TRUE)
+
+# check
+summary(data_sun_raw)
+```
+
+```{r}
+# check formats
+str(data_sun_raw)
+```
+
+
+# clean data
+
+```{r}
+# using dplyr
+data_sun_work <- data_sun_raw %>%
+  mutate(Date=dmy(Date)) %>% # make it as a date format (not a factor)
+   mutate(Plot=factor(Date)) %>%# make it a factor (i.e. not number)
+   mutate(SunScan = ifelse(SunScan<0,0,SunScan))
+
+str(data_sun_work)    
+  
+```
+```{r}
+summary(data_sun_work)
+```
+
