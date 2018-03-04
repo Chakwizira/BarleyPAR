@@ -129,30 +129,20 @@ for(i in 1:length(plotNo)) {
 summary(df_all)
 
 
-test_df<- do.call("rbind", replicate(length(plotNo), df_interp, simplify = FALSE))
-# Bring measured values
+# merge with data but keep NAs for dates when no measurement was done # FIXME: do it elegantly later
+df_temp <- merge(df_all, data_GreenS_work,by=c("Date","Plot"), all=T)
+df_temp2 <- merge(df_temp, data_sun_work,by=c("Date","Plot"), all=T)
 
+df_temp3 <- df_temp2 %>% 
+  mutate(GreenSeeker= ifelse(Date==stDate,0,GreenSeeker)) %>%
+  mutate(SunScan= ifelse(Date==stDate,0,SunScan)) %>%
+  mutate(GreenSeeker= ifelse(Date==endate,0,GreenSeeker)) %>%
+  mutate(SunScan= ifelse(Date==endate,0,SunScan))
 
-df_temp <- merge(df_interp, data_GreenS_work,by="Date")
-
-
-
-
-
-# dataframe with NAs in gaps
-dat <- data.frame(id = c(1,1,1,2,2,2,3,3,3), 
-                  year = c(1,2,3,1,2,3,1,2,3), 
-                  x = c(1,NA,2, 3, NA, 4, 5, NA, 6))
-dat
-
-# fill gaps with linear interpolation
-library(dplyr)
-library(zoo)
-dat %>% 
-  group_by(id) %>% 
-  mutate(x2 = na.approx(x, year)) %>% 
-  ungroup()
-
-
+# FIXME: interpolation not working yet
+df_interpolated <- df_temp3 %>% 
+  group_by(Date) %>% 
+  arrange(Plot, Date) %>%
+  mutate(GreenSeeker2 = na.approx(GreenSeeker, xout=Date)) 
 ```
 
