@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+```{r, include=false}
+library(lubridate) # deal with dates
+library(dplyr) #organise data
+library(tidyr) #organise data
+library(ggplot2) # graph
+```
+text
+
+```{r}
+# Text - comments
+# reads and creates data frame
+
+rawdata <-read.table("H:/My Documents/JOURNAL PAPERS/New Zealand Journal of Agriculture Research (NZJAR)/Barley Radiation interception/BiomassLAI.txt", header = TRUE, na.strings="*")
+```
+
+Inspect data
+
+```{r}
+head(rawdata)
+```
+
+```{r}
+summary(rawdata)
+```
+
+```{r}
+str(rawdata)
+```
+
+clean dataset
+
+```{r}
+#change date format and change plot and block to factor
+#using dplyr
+workdata <- rawdata %>% 
+  dplyr::mutate(Date = dmy(Date)) %>%
+  mutate(Block=factor(Block), Plot=factor(Plot))
+```
+
+```{r}
+str(workdata)
+```
+
+Graph
+
+```{r, fig.width=12}
+# using ggplot 
+workdata %>%
+  ggplot(aes(x=Date,y=StemDM,colour=Water, shape=Cultivar, linetype=Cultivar)) +
+  geom_point() +
+  geom_line() +
+  facet_grid(.~Block)
+  
+
+```
+
+```{r, fig.width=12}
+# using ggplot 
+workdata %>%
+  ggplot(aes(x=Water,y=TotalDM,colour=Water)) +
+  geom_bar(stat="identity") +
+  facet_grid(.~Cultivar)
+  
+
+```
+
+
+
+
