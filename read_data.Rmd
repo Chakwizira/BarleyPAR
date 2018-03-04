@@ -2,11 +2,11 @@
 title: "R Notebook"
 output: html_notebook
 ---
-```{r}
-library(lubridate)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+```{r, include=false}
+library(lubridate) # deal with dates
+library(dplyr) #organise data
+library(tidyr) #organise data
+library(ggplot2) # graph
 ```
 
 
@@ -28,10 +28,9 @@ str(data_raw)
 ```
 # tide up data
 ```{r}
-data_work<-data_raw %>%
-  mutate(Date = as.Date(ymd_hms(Date))) %>%
-  mutate(PAR=X0)%>%
-  dplyr::select(-X0)
+data_work <- data_raw %>% # using dplyr pipes (then)
+  dplyr::mutate(Date = as.Date(ymd_hms(Date))) %>% #force format to date
+  rename(PAR=X0) # same as dplyr::rename
 
 str(data_work)
 ```
@@ -40,11 +39,11 @@ str(data_work)
 summary(data_work)
 ```
 
-```{r}
-data_work %>% 
-  ggplot(aes(x=Date, y=PAR)) +
+```{r, fig.width=12, fig.height=15}
+data_work %>% # using dplyr
+  ggplot(aes(x=Date, y=PAR)) + # using lib ggplot
   geom_point()+
-  facet_grid(Cultivar~Irrigation)
+  facet_grid(Cultivar+Measurement+Block~Irrigation)
   
 ```
 
