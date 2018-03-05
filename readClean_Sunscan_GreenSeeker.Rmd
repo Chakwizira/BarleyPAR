@@ -9,6 +9,22 @@ library(dplyr) #organise data
 library(tidyr) #organise data
 library(ggplot2) # graph
 ```
+
+```{r}
+#comment
+TrialDesign_raw <- read.table("C:/GitHubRepos/BarleyPAR/TrialDesign.txt",header = TRUE)
+
+# check
+summary(TrialDesign_raw)
+```
+```{r}
+# using dplyr
+TrialDesign_work <- TrialDesign_raw %>%
+  mutate(Plot=factor(Plot))%>% # make it as a date format (not a factor
+   mutate(Block=factor(Block)) # make it as a date format (not a factor)
+str(TrialDesign_work)   
+```
+
 # read total radiation
 ```{r}
 #comment
@@ -137,12 +153,35 @@ df_temp3 <- df_temp2 %>%
   mutate(GreenSeeker= ifelse(Date==stDate,0,GreenSeeker)) %>%
   mutate(SunScan= ifelse(Date==stDate,0,SunScan)) %>%
   mutate(GreenSeeker= ifelse(Date==endate,0,GreenSeeker)) %>%
-  mutate(SunScan= ifelse(Date==endate,0,SunScan))
+  mutate(SunScan= ifelse(Date==endate,0,SunScan)) 
 
-# FIXME: interpolation not working yet
-df_interpolated <- df_temp3 %>% 
-  group_by(Date) %>% 
-  arrange(Plot, Date) %>%
-  mutate(GreenSeeker2 = na.approx(GreenSeeker, xout=Date)) 
+options(scipen=999)
+# create interpolated df
+df_interpolated <- df_temp3 %>%
+ group_by(Plot) %>%
+ arrange(Plot, Date) %>%
+ mutate(GreenSeeker_Int = na.approx(GreenSeeker, na.rm=FALSE)) %>%
+ mutate(SunScan_Int = na.approx(SunScan, na.rm=FALSE)) %>%
+ mutate(RadInt_GS = GreenSeeker_Int*Radiation, RadInt_SS = SunScan_Int*Radiation) %>%
+ mutate(RadInt_GS_sum = cumsum(RadInt_GS)) %>%
+ mutate(RadInt_SS_sum=cumsum(RadInt_SS)) %>%
+ merge(TrialDesign_work, by=("Plot"))  
+
+```
+
+```{r}
+df_interpolated %>%
+ # tidyr::gather("variable","Value",RadInt_GS_sum:RadInt_SS_sum) %>%
+  ggplot(aes(x=Date, y=RadInt_GS_sum, colour=Block)) +
+  geom_point() +
+  facet_grid(Cultivar~Irrigation)
+```
+
+```{r}
+df_interpolated %>%
+ # tidyr::gather("variable","Value",RadInt_GS_sum:RadInt_SS_sum) %>%
+  ggplot(aes(x=Date, y=RadInt_SS_sum, colour=Block)) +
+  geom_point() +
+  facet_grid(Cultivar~Irrigation)
 ```
 
