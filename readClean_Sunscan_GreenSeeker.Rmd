@@ -144,7 +144,6 @@ for(i in 1:length(plotNo)) {
 
 summary(df_all)
 
-
 # merge with data but keep NAs for dates when no measurement was done # FIXME: do it elegantly later
 df_temp <- merge(df_all, data_GreenS_work,by=c("Date","Plot"), all=T)
 df_temp2 <- merge(df_temp, data_sun_work,by=c("Date","Plot"), all=T)
@@ -167,6 +166,14 @@ df_interpolated <- df_temp3 %>%
  mutate(RadInt_SS_sum=cumsum(RadInt_SS)) %>%
  merge(TrialDesign_work, by=("Plot"))  
 
+```
+
+```{r}
+df_interpolated %>%
+ # tidyr::gather("variable","Value",RadInt_GS_sum:RadInt_SS_sum) %>%
+  ggplot(aes(x=Date, y=RadInt_GS_sum, colour=Block)) +
+  geom_point() +
+  facet_grid(Cultivar~Irrigation)
 ```
 
 ```{r}
