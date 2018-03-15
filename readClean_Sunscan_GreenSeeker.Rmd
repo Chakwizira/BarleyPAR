@@ -8,6 +8,7 @@ library(lubridate) # deal with dates
 library(dplyr) #organise data
 library(tidyr) #organise data
 library(ggplot2) # graph
+library(zoo) # na approx?
 ```
 
 ```{r}
@@ -120,8 +121,6 @@ summary(data_GreenS_work)
 # 2. Interpolate values by day
 
 ```{r}
-
-
 stDate <- dmy("14/10/2014") # sowing date
 endate <- dmy("11/02/2015") # harvest date  
 plotNo <- c(201:224)
@@ -154,7 +153,13 @@ df_temp3 <- df_temp2 %>%
   mutate(GreenSeeker= ifelse(Date==endate,0,GreenSeeker)) %>%
   mutate(SunScan= ifelse(Date==endate,0,SunScan)) 
 
+
+
+```
+
+```{r}
 options(scipen=999)
+
 # create interpolated df
 df_interpolated <- df_temp3 %>%
  group_by(Plot) %>%
@@ -166,6 +171,7 @@ df_interpolated <- df_temp3 %>%
  mutate(RadInt_SS_sum=cumsum(RadInt_SS)) %>%
  merge(TrialDesign_work, by=("Plot"))  
 
+summary(df_interpolated)
 ```
 
 ```{r}
@@ -190,5 +196,23 @@ df_interpolated %>%
   ggplot(aes(x=Date, y=RadInt_SS_sum, colour=Block)) +
   geom_point() +
   facet_grid(Cultivar~Irrigation)
+```
+# Remove mid - irrigation and select columns of interest
+```{r}
+# list of column names we wann drop
+drop.cols <- c("GreenSeeker", "SunScan", "GreenSeeker_Int", "SunScan_Int","RadInt_GS","RadInt_SS")
+keep.plots <- c("202","204", "205", "206", "210", "213", "215", "217", "219", "220", "221", "222")
+
+# do the filtering
+df_spot <- df_interpolated %>%
+  filter(Plot %in% keep.plots) %>% # keeping plots
+  dplyr::select(-one_of(drop.cols)) # removing columns
+
+# do a test
+print(length(unique(df_spot$Plot)))
+
+```
+```{r}
+write.table(df_spot, "C:/GitHubRepos/BarleyPAR/AccRad_cepSun.txt")
 ```
 

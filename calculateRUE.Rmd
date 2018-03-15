@@ -1,0 +1,39 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(lubridate) # deal with dates
+library(dplyr) #organise data
+library(tidyr) #organise data
+library(ggplot2) # graph
+```
+
+
+```{r}
+data_raw <- read.table("C:/GitHubRepos/BarleyPAR/Biomass.txt",header = TRUE)
+summary(data_raw)
+```
+
+```{r}
+keep.plots <- c("202","204", "205", "206", "210", "213", "215", "217", "219", "220", "221", "222")
+
+data_work <- data_raw %>% 
+  filter(Plot %in% keep.plots) %>% # keeping plots
+  mutate(Plot=factor(Plot))%>% # make it as a date format (not a factor
+   mutate(Block=factor(Block))%>% # make it as a date format (not a factor)
+ mutate(Date=dmy(Date))%>%
+mutate(TotalDM=TotalDM/10)
+str(data_work)
+```
+
+```{r}
+summary(data_work)
+```
+
+```{r}
+data_cepSun <- read.table("C:/GitHubRepos/BarleyPAR/Biomass.txt",header = TRUE)
+summary(data_cepSun)
+```
+

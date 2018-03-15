@@ -2,7 +2,7 @@
 title: "R Notebook"
 output: html_notebook
 ---
-```{r, include=false}
+```{r, warning=FALSE}
 library(lubridate) # deal with dates
 library(dplyr) #organise data
 library(tidyr) #organise data
@@ -14,135 +14,104 @@ library(ggplot2) # graph
 ## heading
 this is text to document
 
-
 ```{r}
 #comment
 data_raw <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\BarleyPARData.dat",header = TRUE, sep=",")
+summary(data_raw)
+```
+
+
+```{r}
+nrow(data_raw)
+```
+
+Isolate above grould PAR by time
+
+merge it with measrurements later to subtract the interception
+```{r}
+
+##### FIXME PLEASE
+crazy.unit.fix <- 10000*2
+
+data_above <- data_raw %>% # using dplyr pipes (then)
+  dplyr::filter(Measurement=="AboveCanopyPAR") %>% # get rid of this
+  dplyr::select(-Cultivar,-Irrigation,-Block,-Measurement) %>%
+  dplyr::mutate(Date = ymd_hms(Date)) %>% # force format to date
+  mutate(X0=ifelse(X0<0,0,as.numeric(X0))) %>% # FIXME: find best solution to neg vals
+  mutate(Rad_above=X0/crazy.unit.fix)%>% # same as dplyr::rename and correct unit to MJ/m2 FIXME (just test)
+  dplyr::select(-X0)
+
+summary(data_above)
+```
+
+
+# Create rad Below and inter
+```{r}
+ df_temp2 <- data_raw %>% # using dplyr pipes (then) 
+  dplyr::filter(Measurement!="AboveCanopyPAR") %>% # get rid of this
+  dplyr::mutate(Date = ymd_hms(Date)) %>% # force format to date
+  mutate(X0=ifelse(X0<0,0,as.numeric(X0))) %>% # FIXME: find best solution to neg vals
+  mutate(Radiation=X0/crazy.unit.fix) %>% # same as dplyr::rename and correct unit to MJ/m2 FIXME (just test)
+  dplyr::select(-X0) %>%
+  merge(data_above,by=c("Date")) %>%
+  mutate(Rad_Int=Rad_above-Radiation) %>% # FIXME: Check with Hamish if this inddeed the logic adn variable meaning
+  dplyr::select(-Measurement) %>%
+  mutate(Rad_Int = ifelse(Rad_Int<0,0,Rad_Int)) # FIXME: FIXME: Find out why they are negative and what the right fix - quick solution now
+
+summary(df_temp2)
 
 ```
 
-check data
+
+```{r}
+#comment
+TrialDesign_raw <- read.table("C:/GitHubRepos/BarleyPAR/TrialDesign.txt",header = TRUE)
+
+# check
+df_m <- merge(df_temp2, TrialDesign_raw, by=c("Block", "Cultivar",  "Irrigation"))
+
+summary(df_m)
+```
+
+FIXME: Check if this is needed
+Remove duplicated data
 ```{r}
 
-str(data_raw)
-```
-# tide up data
-```{r}
-data_work <- data_raw %>% # using dplyr pipes (then)
-  dplyr::mutate(Date = as.Date(ymd_hms(Date))) %>% #force format to date
-  rename(PAR=X0) # same as dplyr::rename
+df_noDuplic <- df_m[!duplicated(df_m), ] # FIXME: Find out why?
 
-str(data_work)
 ```
-# check data
+
+
 ```{r}
+
+diff<-nrow(df_m)-nrow(df_noDuplic)
+print(paste0("Deleted  ",diff," duplicated rows"))
+
+# FIXME: Find out why we have duplicated data
+```
+Now finish calculation 
+```{r}
+
+data_work <- df_noDuplic  %>%
+  mutate(DateSimple = as.Date(Date)) %>%
+  group_by(DateSimple, Cultivar, Irrigation, Block, Plot) %>%
+  summarise(RadDaySum = sum(Rad_Int)) %>%
+   group_by(Plot) %>%
+   arrange(Plot, DateSimple) %>%
+   mutate(RadIntSum = cumsum(RadDaySum)) #FIXME: cumsum?
+  
 summary(data_work)
 ```
 
-```{r, fig.width=12, fig.height=15}
+```{r, fig.width=12, fig.height=6}
 data_work %>% # using dplyr
-  ggplot(aes(x=Date, y=PAR)) + # using lib ggplot
+  ggplot(aes(x=DateSimple, y=RadIntSum, colour=Block)) + # using lib ggplot
   geom_point()+
-  facet_grid(Cultivar+Measurement+Block~Irrigation)
+  facet_grid(Cultivar~Irrigation)
   
 ```
 
 ```{r}
-data_raw <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\BarleyPARData.dat",header = TRUE, sep=",")
-View(data_raw)
-str(data_raw)
-```
-```{r}
-
-data_raw_WHEAT <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\WheatPARData.dat",header = TRUE, sep=",")
-View(data_raw)
-str(data_raw)
-
-```
-
-```{r}
-head(data_raw)
-```
-
-```{r}
-tail(data_raw)
-```
-```{r}
-summary(data_raw)
-```
-
-```{r}
-RUE <- read.table("K:\\CPDiary\\Data\\R file\\R_TablesforRUE.txt", header = TRUE)
-```
-
-```{r}
-summary(RUE)
-head(RUE)
-tail(RUE)
-```
-
-```{r}
-summary(RUE)
-```
-```{r}
-RUEStats <- read.table("K:\\CPDiary\\Data\\R file\\RUE_stats.txt", header = TRUE)
-summary(RUEStats)
-```
-
-```{r}
-head(RUEStats)
-```
-```{r}
-View(RUEStats)
-```
-```{r}
-str(RUEStats)
-```
-
-```{r}
-WheatPAR <- read.table("K:\\Rainshelter\\Barley_2014_15\\RadiationAnalysis\\WheatPARData.dat", header = TRUE, sep=",")
-```
-```{r}
-summary(WheatPAR)
-```
-Creat transimmitted PAR
-```{r}
-data_work <- data_raw %>%
-  mutate(X0 = ifelse(X0<0,0,as.numeric(X0))) %>% # make negative values = 0
-  mutate(Cultivar = as.factor(Cultivar))%>%
-  mutate(Cultivar = as.factor(Block))%>%
-  mutate(Cultivar = as.factor(Irrigation))%>%
-  mutate(Date_time=ymd_hms(Date)) %>%
-  mutate(Date=as.Date(Date)) # creating daily "date"
-
-
-summary(data_work)
-
-str(data_work)
-
-```
-Do averages
-```{r}
-df_average <- data_work %>%
-  group_by(Measurement,Cultivar,Irrigation,Block,Date) %>% # average by? ...
-  summarise(PAR_avg = mean(X0)) # %>%
- # filter(Date == "2014-11-06")
-
-summary(df_average)
-
-
-
-
-# test
-
-str(data_raw)
-
-str(data_work)
-```
-graph
-```{r}
-df_average %>%
-  ggplot(aes(x=Date, y=PAR_avg))+
-  geom_line(aes(colour=factor(Measurement)))
+write.table(data_work, "C:/GitHubRepos/BarleyPAR/AccRad_autPAR.txt")
 ```
 
