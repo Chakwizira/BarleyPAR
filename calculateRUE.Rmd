@@ -12,28 +12,72 @@ library(ggplot2) # graph
 
 
 ```{r}
-data_raw <- read.table("C:/GitHubRepos/BarleyPAR/Biomass.txt",header = TRUE)
-summary(data_raw)
+data_bio_raw <- read.table("C:/GitHubRepos/BarleyPAR/Biomass.txt",header = TRUE)
+summary(data_bio_raw)
 ```
 
 ```{r}
 keep.plots <- c("202","204", "205", "206", "210", "213", "215", "217", "219", "220", "221", "222")
 
-data_work <- data_raw %>% 
+data_bio_work <- data_bio_raw %>% 
   filter(Plot %in% keep.plots) %>% # keeping plots
   mutate(Plot=factor(Plot))%>% # make it as a date format (not a factor
    mutate(Block=factor(Block))%>% # make it as a date format (not a factor)
- mutate(Date=dmy(Date))%>%
+ mutate(Date=dmy(Date)) %>%
+  dplyr::select(-Harvest) %>%
+ rename(Irrigation=Water) %>%
 mutate(TotalDM=TotalDM/10)
-str(data_work)
+str(data_bio_work)
 ```
 
 ```{r}
-summary(data_work)
+summary(data_bio_work)
 ```
 
 ```{r}
-data_cepSun <- read.table("C:/GitHubRepos/BarleyPAR/Biomass.txt",header = TRUE)
-summary(data_cepSun)
+data_autPAR_raw <- read.table("C:/GitHubRepos/BarleyPAR/AccRad_autPAR.txt",header = TRUE)
+summary(data_autPAR_raw)
+```
+```{r}
+data_autPAR_work <- data_autPAR_raw %>% 
+  mutate(Date=DateSimple) %>% 
+  dplyr::select(-DateSimple, -RadDaySum) %>%
+  filter(Plot %in% keep.plots) %>% # keeping plots
+  mutate(Plot=factor(Plot))%>% # make it as a date format (not a factor
+   mutate(Block=factor(Block))%>% # make it as a date format (not a factor)
+   mutate(Date=ymd(Date)) %>%
+  rename(RadInt_AP_sum = RadIntSum)
+
+
+str(data_autPAR_work)
+```
+
+
+
+```{r}
+data_cepSun_raw <- read.table("C:/GitHubRepos/BarleyPAR/AccRad_cepSun.txt",header = TRUE)
+summary(data_cepSun_raw)
+```
+```{r}
+data_cepSun_work <- data_cepSun_raw %>% 
+  dplyr::select(-Radiation) %>% 
+  filter(Plot %in% keep.plots) %>% # keeping plots
+  mutate(Plot=factor(Plot))%>% # make it as a date format (not a factor
+   mutate(Block=factor(Block))%>% # make it as a date format (not a factor)
+   mutate(Date=ymd(Date))
+
+
+str(data_cepSun_work)
+```
+ Do Merege
+ 
+ 
+```{r}
+df_m1 <- merge(data_bio_work,data_cepSun_work, by=c("Date", "Plot", "Cultivar", "Irrigation", "Block"))
+summary(df_m1)
+```
+```{r}
+df_m2 <- merge(df_m1,data_autPAR_work, by=c("Date", "Plot", "Cultivar", "Irrigation", "Block"))
+summary(df_m2)
 ```
 
