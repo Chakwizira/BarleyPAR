@@ -1,0 +1,14 @@
+Trial design for autPAR
+Plots	Block	Cultivar	Irrigation	Treat	
+202	1	Omaka	High	Omaka High	
+204	1	Dash	High	Dash High	
+205	1	Omaka	Low	Omaka Low	
+206	1	Dash	Low	Dash Low	
+210	2	Omaka	Low	Omaka Low	
+213	3	Omaka	High	Omaka High	
+215	3	Dash	High	Dash High	
+217	3	Dash	Low	Dash Low	
+219	4	Dash	High	Dash High	
+220	4	Dash	Low	Dash Low	
+221	4	Omaka	Low	Omaka Low	
+222	4	Omaka	High	Omaka High
