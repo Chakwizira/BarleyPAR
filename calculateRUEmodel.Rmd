@@ -1,0 +1,68 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+library(lubridate)
+```
+
+Read data
+```{r}
+
+pathDir <- "C:/GitHubRepos/2018_BayleyParEmmanuel/BarleyPAR"
+fileName <- "/Biomass_radiation_together.txt"
+info_raw <- read.table(paste0(pathDir,fileName), header = TRUE)
+summary(info_raw)
+```
+
+Clean up data
+```{r}
+info_work <- info_raw %>%
+  mutate(Date = ymd(Date)) %>%
+  mutate(Plot=factor(Plot),Block=factor(Block),Plot=factor(Plot))%>%
+  tidyr::gather("Method","IntPAR",RadInt_GS_sum:RadInt_AP_sum) %>%
+  mutate(Method=factor(Method))
+  
+summary(info_work)
+```
+
+```{r, fig.height=10}
+info_work %>%
+  ggplot(aes(x=IntPAR,y=TotalDM, colour=Block)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_grid(Method~Cultivar+Irrigation, aes(fill=Block))+ 
+   theme(text=element_text(size=15))
+```
+
+
+Do linear model
+```{r}
+df_model <- info_work %>%
+  group_by(Plot,Cultivar, Irrigation, Block, Method) %>%
+  do(mod = lm(TotalDM ~ IntPAR, data = .)) 
+
+
+df_stats <- tidy(df_model, mod) %>%
+  mutate(term=factor(term)) %>%
+  filter(term=="IntPAR") %>%
+  dplyr::select(-term)
+
+
+
+summary(df_stats)
+
+```
+```{r}
+df_stats %>%
+  ggplot(aes(x=Method,y=estimate)) +
+  geom_boxplot() +
+  geom_point(aes(colour=Block)) +
+  facet_grid(Cultivar~Irrigation) + 
+   theme(axis.text.x=element_text(size=15, angle=45,hjust=0.95)) +
+  ylab("RUE")
+```
